@@ -17,7 +17,10 @@ my_bot = Bot(command_prefix = '!!')
 with open('config.json') as configFile: # import config
     config = json.load(configFile)
 
-
+@my_bot.event
+async def on_ready():
+    print('Logged in as: ' + my_bot.user.name + ' (' + my_bot.user.id + ')')
+    print('------------------')
 
 @my_bot.command(pass_context=True)
 async def hello(ctx):
@@ -40,6 +43,7 @@ class Comic: # for xkcd command
             html = await fetch(session, 'https://xkcd.com/' + str(num) + '/info.0.json')
             d = json.loads(html)
             return d['img']
+            session.close()
 
     def randomComicNum(self):
         return randint(1, self.totalComics)
@@ -49,6 +53,7 @@ class Comic: # for xkcd command
             html = await fetch(session, 'https://xkcd.com/info.0.json')
             d = json.loads(html)
             self.totalComics = d['num']
+            session.close()
 
     def getRandomComic(self):
         return self.getImgUrl(self.randomComicNum())
@@ -110,6 +115,8 @@ async def cat(ctx):
     async with aiohttp.ClientSession() as cs:
         async with cs.get('http://random.cat/meow') as r:
             res = await r.json()
+            cs.close()
+
     em = discord.Embed()
     await my_bot.send_message(ctx.message.channel, content=ctx.message.author.mention, embed=em.set_image(url=res['file']))
     await my_bot.delete_message(ctx.message)
@@ -124,6 +131,7 @@ async def dog(ctx):
             async with cs.get('https://random.dog/woof.json') as r:
                 res = await r.json()
                 res = res['url']
+                cs.close()
         if res.endswith('.mp4'):
             pass
         else:
@@ -143,6 +151,7 @@ class Shibs():
                 auth = aiohttp.BasicAuth(config['github']['username'], password=config['github']['pass'])
                 async with session.get(url, auth=auth) as response:
                     html = await response.text()
+                    session.close()
             self.data = json.loads(html)
             self.size = len(self.data)
 
