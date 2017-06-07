@@ -10,6 +10,7 @@ import async_timeout
 import discord
 from discord.ext.commands import Bot
 
+startup_extensions = ['members', 'animals']
 
 print('running...')
 my_bot = Bot(command_prefix = '!!')
@@ -108,75 +109,16 @@ async def iconify(ctx, *args):
     await my_bot.delete_message(ctx.message)
     print('iconify: ' + iconstring)
 
-@my_bot.command(pass_context=True, aliases=['c'])
-async def cat(ctx):
-    """(c) random cat picture"""
-    print('cat')
-    async with aiohttp.ClientSession() as cs:
-        async with cs.get('http://random.cat/meow') as r:
-            res = await r.json()
-            cs.close()
 
-    em = discord.Embed()
-    await my_bot.send_message(ctx.message.channel, content=ctx.message.author.mention, embed=em.set_image(url=res['file']))
-    await my_bot.delete_message(ctx.message)
-
-@my_bot.command(pass_context=True, aliases=['d'])
-async def dog(ctx):
-    """(d) random dog picture"""
-    print('dog')
-    isVideo = True
-    while isVideo:
-        async with aiohttp.ClientSession() as cs:
-            async with cs.get('https://random.dog/woof.json') as r:
-                res = await r.json()
-                res = res['url']
-                cs.close()
-        if res.endswith('.mp4'):
-            pass
-        else:
-            isVideo = False
-    em = discord.Embed()
-    await my_bot.send_message(ctx.message.channel, content=ctx.message.author.mention, embed=em.set_image(url=res))
-    await my_bot.delete_message(ctx.message)
-
-
-class Shibs():
-    data = None
-    size = None
-    async def start(self):
-        async with aiohttp.ClientSession() as session:
-            url = 'https://api.github.com/repos/RobIsAnxious/shibesbot-db/contents/pictures'
-            with async_timeout.timeout(10):
-                auth = aiohttp.BasicAuth(config['github']['username'], password=config['github']['pass'])
-                async with session.get(url, auth=auth) as response:
-                    html = await response.text()
-                    session.close()
-            self.data = json.loads(html)
-            self.size = len(self.data)
-
-    def getAttr(self, num, attr):
-        return self.data[num][attr]
-
-    def getRand(self):
-        return randint(1, self.size)
-
-    def getImgUrl(self, num):
-        return self.data[num]['download_url']
-
-
-s = Shibs()
-my_bot.loop.run_until_complete(s.start())
-
-@my_bot.command(pass_context=True, aliases=['s'])
-async def shib(ctx):
-    """(s) basically hijacks the shibs database to provide shibs"""
-    n = s.getRand()
-    print('shib')
-    em = discord.Embed()
-    await my_bot.send_message(ctx.message.channel, content=ctx.message.author.mention, embed=em.set_image(url=s.getImgUrl(n)))
-    await my_bot.delete_message(ctx.message)
-
+if __name__ == "__main__":
+    for extension in startup_extensions:
+        try:
+            my_bot.load_extension(extension)
+            print('imported ' + extension)
+        except Exception as e:
+            raise(e)
+            # exc = '{}: {}'.format(type(e).__name__, e)
+            print('Failed to load extension {}\n{}'.format(extension, exc))
 
 
 my_bot.run(config['botkey']) # Shibbot's Cousin (debate)
